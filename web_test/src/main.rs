@@ -22,5 +22,8 @@ pub enum WebError {
     Io(#[from] std::io::Error),
     #[status_code(500)]
     #[error("Test Error")]
-    Test
+    Test,
+    #[status_code(BAD_REQUEST)]
+    #[error("Test Error")]
+    Two,
 }

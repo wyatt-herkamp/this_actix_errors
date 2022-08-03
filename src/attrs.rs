@@ -3,14 +3,16 @@ use quote::{format_ident, quote, ToTokens};
 use std::collections::BTreeSet as Set;
 use std::iter::FromIterator;
 use syn::parse::{Nothing, Parser, ParseStream};
-use syn::{
-    braced, bracketed, parenthesized, token, Attribute, Error, Ident, Index, LitInt, LitStr,
-    Result, Token,
-};
+use syn::{braced, bracketed, parenthesized, token, Attribute, Error, Ident, Index, LitInt, LitStr, Result, Token, ItemConst, ItemEnum};
+
+pub enum StatusCode {
+    StatusCodeAsInt(LitInt),
+    StatusCode(Ident),
+}
 
 pub struct Attributes {
     pub message: Option<LitStr>,
-    pub status_code: Option<LitInt>,
+    pub status_code: Option<StatusCode>,
 }
 
 impl Attributes {
@@ -27,7 +29,11 @@ impl Attributes {
                 })?;
             } else if attr.path.is_ident("status_code") {
                 attr.parse_args_with(|input: ParseStream| {
-                    attrs.status_code = Some(input.parse()?);
+                    if let Ok(v) = input.parse::<LitInt>() {
+                        attrs.status_code = Some(StatusCode::StatusCodeAsInt(v));
+                    }else{
+                        attrs.status_code = Some(StatusCode::StatusCode(input.parse()?));
+                    }
                     Ok(())
                 })?;
             }

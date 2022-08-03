@@ -4,6 +4,7 @@ use std::collections::BTreeSet as Set;
 use syn::spanned::Spanned;
 use syn::{Attribute, Data, DataEnum, DeriveInput, Fields, GenericArgument, Member, PathArguments, Result, Token, Type, Visibility};
 use crate::attrs;
+use crate::attrs::StatusCode;
 
 pub fn execute(ident: Ident, node: DataEnum, attrs: Vec<Attribute>) -> Result<TokenStream> {
     let mut members = Vec::new();
@@ -28,13 +29,26 @@ pub fn execute(ident: Ident, node: DataEnum, attrs: Vec<Attribute>) -> Result<To
             }
         };
         let status_code = if let Some(ref status_code) = v.status_code {
-            let v = quote! {
-                  actix_web::http::StatusCode::from_u16(#status_code).unwrap()
-            };
-            status_codes.push(quote! {
-                #ident::#arm_ident #field_pat => {#v}
-            });
-            v
+            match status_code {
+                StatusCode::StatusCodeAsInt(ref v) => {
+                    let v = quote! {
+                        actix_web::http::StatusCode::from_u16(#v).unwrap()
+                    };
+                    status_codes.push(quote! {
+                        #ident::#arm_ident #field_pat => {#v}
+                    });
+                    v
+                }
+                StatusCode::StatusCode(ref id) => {
+                    let v = quote! {
+                        actix_web::http::StatusCode::#id
+                    };
+                    status_codes.push(quote! {
+                        #ident::#arm_ident #field_pat => {#v}
+                    });
+                    v
+                }
+            }
         } else {
             quote! {
                   actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
@@ -47,7 +61,7 @@ pub fn execute(ident: Ident, node: DataEnum, attrs: Vec<Attribute>) -> Result<To
                 }
             };
             members.push(response);
-        } else if let Some( _) = v.status_code {
+        } else if let Some(_) = v.status_code {
             let response = quote! {
                 #ident::#arm_ident #field_pat => {
                     (actix_web::HttpResponse::new(#status_code),actix_web::web::Bytes::from(format!("{}",self)))
