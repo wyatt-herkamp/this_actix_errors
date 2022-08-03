@@ -20,4 +20,7 @@ pub enum WebError {
     #[message("Failed to read ")]
     #[error("Failed to read {0}")]
     Io(#[from] std::io::Error),
+    #[status_code(500)]
+    #[error("Test Error")]
+    Test
 }

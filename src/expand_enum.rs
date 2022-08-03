@@ -11,7 +11,7 @@ pub fn execute(ident: Ident, node: DataEnum, attrs: Vec<Attribute>) -> Result<To
     for arm in node.variants {
         let arm_ident = arm.ident;
         let v = attrs::Attributes::get(&arm.attrs)?;
-        let  field_pat = match arm.fields {
+        let field_pat = match arm.fields {
             Fields::Named(_) => {
                 quote! {
                     {..}
@@ -27,12 +27,12 @@ pub fn execute(ident: Ident, node: DataEnum, attrs: Vec<Attribute>) -> Result<To
                 }
             }
         };
-        let status_code = if let Some(status_code) = v.status_code {
+        let status_code = if let Some(ref status_code) = v.status_code {
             let v = quote! {
                   actix_web::http::StatusCode::from_u16(#status_code).unwrap()
             };
             status_codes.push(quote! {
-                #ident::#arm_ident #field_pat => #v,
+                #ident::#arm_ident #field_pat => {#v}
             });
             v
         } else {
@@ -47,6 +47,13 @@ pub fn execute(ident: Ident, node: DataEnum, attrs: Vec<Attribute>) -> Result<To
                 }
             };
             members.push(response);
+        } else if let Some( _) = v.status_code {
+            let response = quote! {
+                #ident::#arm_ident #field_pat => {
+                    (actix_web::HttpResponse::new(#status_code),actix_web::web::Bytes::from(format!("{}",self)))
+                }
+            };
+            members.push(response);
         };
     }
 
@@ -56,7 +63,7 @@ pub fn execute(ident: Ident, node: DataEnum, attrs: Vec<Attribute>) -> Result<To
                 match self {
                     #(
                         #status_codes
-                    ),*
+                    )*
                     _ =>  actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
                 }
             }
@@ -64,9 +71,9 @@ pub fn execute(ident: Ident, node: DataEnum, attrs: Vec<Attribute>) -> Result<To
                 let (mut response, buf) = match self {
                     #(
                         #members
-                    ),*
+                    )*
                     _ => {
-                        (actix_web::HttpResponse::InternalServerError().finish(),actix_web::web::Bytes::from("Internal Server Error"))
+                        (actix_web::HttpResponse::InternalServerError().finish(),actix_web::web::Bytes::from(format!("{}", self)))
                     },
                 };
                 response.headers_mut().insert(actix_web::http::header::CONTENT_TYPE, "text/plain; charset=utf-8".parse().unwrap());
