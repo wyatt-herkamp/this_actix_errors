@@ -8,7 +8,7 @@ pub fn execute(
     data_enum: DataEnum,
     container_attrs: Vec<Attribute>,
 ) -> Result<TokenStream> {
-    let mut container_attr: ContainerAttr = container_attrs
+    let container_attr: ContainerAttr = container_attrs
         .into_iter()
         .find(|attr| attr.path().is_ident("response_error"))
         .map(|v| v.parse_args::<ContainerAttr>())
