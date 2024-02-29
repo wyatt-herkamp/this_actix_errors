@@ -1,0 +1,17 @@
+[package]
+name = "this_actix_error_macros"
+version.workspace = true
+edition.workspace = true
+description = "Macros for this_actix_error"
+license.workspace = true
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1"
+proc-macro2 = "1"
+syn = { version = "2", features = ["full", "extra-traits"] }
+[features]
+tracing = []

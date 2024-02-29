@@ -1,16 +1,36 @@
-[package]
-name = "this_actix_error"
+[workspace]
+members = ["macros"]
+resolver = "2"
+[workspace.package]
 version = "0.0.0"
 authors = ["Wyatt Herkamp <wherkamp@gmail.com>"]
-description = "A `cargo generate` template for quick-starting a procedural macro crate"
-keywords = ["template", "proc_macro", "procmacro"]
 edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/wyatt-herkamp/this_actix_errors"
 
-[lib]
-proc-macro = true
+
+[package]
+name = "this_actix_error"
+version.workspace = true
+edition.workspace = true
+description = "A library for creating custom error types for actix-web"
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
-quote = "1"
-proc-macro2 = "1.0"
-syn = "1.0"
+this_actix_error_macros = { path = "./macros" }
+actix-web = "4"
+tracing = { version = "0.1", optional = true }
 
+[dev-dependencies]
+thiserror = "1.0.31"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-actix-web = "0.7"
+tracing = "0.1"
+[features]
+tracing = ["dep:tracing", "this_actix_error_macros/tracing"]
+
+[[example]]
+name = "website"
+path = "examples/website.rs"
+features = ["tracing"]
